@@ -1,0 +1,24 @@
+{
+  "task_id": "custom-4262483a",
+  "title": "Sales Data Analysis",
+  "description": "Analyze quarterly sales data and provide insights",
+  "domain": "data_analysis",
+  "difficulty": "medium",
+  "prompt": "Given the following quarterly sales data:\nQ1 2023: $450,000\nQ2 2023: $520,000\nQ3 2023: $485,000\nQ4 2023: $610,000\nQ1 2024: $580,000\n\nProvide:\n1. Year-over-year growth rate for Q1\n2. The quarter with highest growth\n3. Average quarterly sales for 2023\n4. Brief recommendation for Q2 2024 sales target",
+  "expected_output_type": "structured",
+  "reference_answer": null,
+  "evaluation_criteria": [
+    {
+      "dimension": "accuracy",
+      "weight": 0.6,
+      "description": "Calculations are correct"
+    },
+    {
+      "dimension": "usefulness",
+      "weight": 0.4,
+      "description": "Insights and recommendations are practical"
+    }
+  ],
+  "metadata": {},
+  "created_at": "2026-02-01 21:45:48.835979+00:00"
+}

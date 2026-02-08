@@ -1,0 +1,29 @@
+{
+  "task_id": "custom-55317c83",
+  "title": "Database Query Optimization",
+  "description": "Optimize a slow SQL query",
+  "domain": "software_engineering",
+  "difficulty": "medium",
+  "prompt": "Given this slow SQL query:\n\n```sql\nSELECT u.name, COUNT(o.id) as order_count, SUM(o.total) as revenue\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nWHERE o.created_at > '2024-01-01'\nGROUP BY u.name\nHAVING COUNT(o.id) > 5\nORDER BY revenue DESC;\n```\n\nThe users table has 1M rows, orders table has 10M rows. The query takes 45 seconds.\n\n1. Identify performance issues\n2. Provide an optimized version\n3. Suggest appropriate indexes\n4. Explain your reasoning",
+  "expected_output_type": "text",
+  "reference_answer": null,
+  "evaluation_criteria": [
+    {
+      "dimension": "accuracy",
+      "weight": 0.5,
+      "description": "Correctly identifies issues and provides valid optimizations"
+    },
+    {
+      "dimension": "usefulness",
+      "weight": 0.3,
+      "description": "Practical recommendations that would improve performance"
+    },
+    {
+      "dimension": "clarity",
+      "weight": 0.2,
+      "description": "Clear explanation of reasoning"
+    }
+  ],
+  "metadata": {},
+  "created_at": "2026-02-01 21:45:48.886736+00:00"
+}

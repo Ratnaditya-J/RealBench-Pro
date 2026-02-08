@@ -1,0 +1,252 @@
+[
+  {
+    "task_id": "code-001",
+    "title": "CSV Parser Function",
+    "description": "Write a Python function that parses CSV data and handles edge cases",
+    "domain": "software_engineering",
+    "difficulty": "medium",
+    "prompt": "Write a Python function called `parse_csv` that takes a CSV string as input and returns a list of dictionaries. The function should:\n1. Handle both comma and semicolon delimiters\n2. Treat the first row as headers\n3. Handle quoted fields that may contain delimiters\n4. Return an empty list for invalid input\n\nExample:\nInput: \"name,age\\nAlice,30\\nBob,25\"\nOutput: [{'name': 'Alice', 'age': '30'}, {'name': 'Bob', 'age': '25'}]",
+    "expected_output_type": "code",
+    "reference_answer": null,
+    "evaluation_criteria": [
+      {
+        "dimension": "accuracy",
+        "weight": 0.5,
+        "description": "Function correctly parses CSV and handles edge cases"
+      },
+      {
+        "dimension": "efficiency",
+        "weight": 0.3,
+        "description": "Code is efficient and well-structured"
+      },
+      {
+        "dimension": "clarity",
+        "weight": 0.2,
+        "description": "Code is readable with appropriate comments"
+      }
+    ]
+  },
+  {
+    "task_id": "data-001",
+    "title": "Sales Data Analysis",
+    "description": "Analyze quarterly sales data and provide insights",
+    "domain": "data_analysis",
+    "difficulty": "medium",
+    "prompt": "Given the following quarterly sales data:\nQ1 2023: $450,000\nQ2 2023: $520,000\nQ3 2023: $485,000\nQ4 2023: $610,000\nQ1 2024: $580,000\n\nProvide:\n1. Year-over-year growth rate for Q1\n2. The quarter with highest growth\n3. Average quarterly sales for 2023\n4. Brief recommendation for Q2 2024 sales target",
+    "expected_output_type": "structured",
+    "reference_answer": null,
+    "evaluation_criteria": [
+      {
+        "dimension": "accuracy",
+        "weight": 0.6,
+        "description": "Calculations are correct"
+      },
+      {
+        "dimension": "usefulness",
+        "weight": 0.4,
+        "description": "Insights and recommendations are practical"
+      }
+    ]
+  },
+  {
+    "task_id": "write-001",
+    "title": "Product Launch Email",
+    "description": "Write a professional product launch email",
+    "domain": "writing",
+    "difficulty": "easy",
+    "prompt": "Write a professional email announcing the launch of a new AI-powered task management app called 'FlowMaster' to existing customers. The email should:\n1. Be engaging and concise (under 200 words)\n2. Highlight 3 key features: AI task prioritization, smart scheduling, team collaboration\n3. Include a clear call-to-action\n4. Maintain a friendly yet professional tone",
+    "expected_output_type": "text",
+    "reference_answer": null,
+    "evaluation_criteria": [
+      {
+        "dimension": "clarity",
+        "weight": 0.3,
+        "description": "Message is clear and well-structured"
+      },
+      {
+        "dimension": "usefulness",
+        "weight": 0.4,
+        "description": "Effectively communicates value and drives action"
+      },
+      {
+        "dimension": "accuracy",
+        "weight": 0.3,
+        "description": "Includes all required elements"
+      }
+    ]
+  },
+  {
+    "task_id": "reason-001",
+    "title": "Logic Puzzle: Island of Knights and Knaves",
+    "description": "Solve a classic logic puzzle",
+    "domain": "reasoning",
+    "difficulty": "hard",
+    "prompt": "On an island, knights always tell the truth and knaves always lie. You meet three inhabitants: Alex, Bailey, and Casey.\n\nAlex says: 'Bailey is a knave.'\nBailey says: 'Casey is a knave.'\nCasey says: 'Alex and Bailey are both knaves.'\n\nDetermine who is a knight and who is a knave. Explain your reasoning step-by-step.",
+    "expected_output_type": "text",
+    "reference_answer": "Alex is a knight, Bailey is a knight, Casey is a knave.",
+    "evaluation_criteria": [
+      {
+        "dimension": "accuracy",
+        "weight": 0.7,
+        "description": "Correct solution"
+      },
+      {
+        "dimension": "clarity",
+        "weight": 0.3,
+        "description": "Clear logical reasoning"
+      }
+    ]
+  },
+  {
+    "task_id": "math-001",
+    "title": "Probability Problem",
+    "description": "Calculate probability with combinations",
+    "domain": "math",
+    "difficulty": "medium",
+    "prompt": "A bag contains 5 red balls, 3 blue balls, and 2 green balls. If you draw 3 balls at random without replacement:\n\n1. What is the probability that all 3 balls are red?\n2. What is the probability that you get exactly 2 red balls and 1 blue ball?\n\nShow your work and express answers as fractions.",
+    "expected_output_type": "text",
+    "reference_answer": "1. P(3 red) = C(5,3)/C(10,3) = 10/120 = 1/12\n2. P(2 red, 1 blue) = C(5,2)*C(3,1)/C(10,3) = 10*3/120 = 30/120 = 1/4",
+    "evaluation_criteria": [
+      {
+        "dimension": "accuracy",
+        "weight": 0.8,
+        "description": "Correct calculations and final answers"
+      },
+      {
+        "dimension": "clarity",
+        "weight": 0.2,
+        "description": "Clear explanation of methodology"
+      }
+    ]
+  },
+  {
+    "task_id": "code-002",
+    "title": "API Rate Limiter",
+    "description": "Design a simple rate limiting system",
+    "domain": "software_engineering",
+    "difficulty": "hard",
+    "prompt": "Design and implement a token bucket rate limiter in Python. The rate limiter should:\n\n1. Allow a maximum of N requests per time window\n2. Support checking if a request is allowed\n3. Support refilling tokens over time\n4. Be thread-safe\n\nImplement a class with methods: `allow_request()` returning True/False, and proper initialization with rate limit parameters.",
+    "expected_output_type": "code",
+    "reference_answer": null,
+    "evaluation_criteria": [
+      {
+        "dimension": "accuracy",
+        "weight": 0.4,
+        "description": "Correctly implements rate limiting logic"
+      },
+      {
+        "dimension": "efficiency",
+        "weight": 0.3,
+        "description": "Efficient algorithm and thread safety"
+      },
+      {
+        "dimension": "clarity",
+        "weight": 0.3,
+        "description": "Clean code with good documentation"
+      }
+    ]
+  },
+  {
+    "task_id": "write-002",
+    "title": "Performance Review Summary",
+    "description": "Summarize employee performance data",
+    "domain": "writing",
+    "difficulty": "medium",
+    "prompt": "You are writing a quarterly performance review summary for a software engineer. Based on the following data points, write a 150-word summary:\n\n- Completed 23 tickets (target was 20)\n- Fixed 8 critical bugs\n- Mentored 2 junior developers\n- Code review participation: 85%\n- Customer satisfaction score: 4.2/5\n- Missed 1 deadline due to scope creep\n\nThe summary should be balanced, professional, and highlight both strengths and areas for improvement.",
+    "expected_output_type": "text",
+    "reference_answer": null,
+    "evaluation_criteria": [
+      {
+        "dimension": "clarity",
+        "weight": 0.3,
+        "description": "Well-structured and professional"
+      },
+      {
+        "dimension": "accuracy",
+        "weight": 0.4,
+        "description": "Accurately reflects all data points"
+      },
+      {
+        "dimension": "usefulness",
+        "weight": 0.3,
+        "description": "Provides balanced, actionable insights"
+      }
+    ]
+  },
+  {
+    "task_id": "data-002",
+    "title": "Customer Churn Prediction Strategy",
+    "description": "Develop a data-driven strategy to reduce churn",
+    "domain": "data_analysis",
+    "difficulty": "hard",
+    "prompt": "A SaaS company has the following customer data:\n- Monthly churn rate: 5%\n- Average customer lifetime: 12 months\n- Churn reasons: 40% pricing, 30% lack of features, 20% poor support, 10% competitors\n- Customer acquisition cost: $500\n- Average revenue per customer: $100/month\n\nDevelop a data-driven strategy to reduce churn by analyzing:\n1. Which churn reason should be prioritized (show ROI calculation)\n2. What would be the impact of reducing churn from 5% to 3%\n3. Specific actionable recommendations",
+    "expected_output_type": "structured",
+    "reference_answer": null,
+    "evaluation_criteria": [
+      {
+        "dimension": "accuracy",
+        "weight": 0.4,
+        "description": "Correct calculations and analysis"
+      },
+      {
+        "dimension": "usefulness",
+        "weight": 0.6,
+        "description": "Practical, actionable recommendations"
+      }
+    ]
+  },
+  {
+    "task_id": "reason-002",
+    "title": "Ethical Dilemma Resolution",
+    "description": "Analyze an ethical workplace dilemma",
+    "domain": "reasoning",
+    "difficulty": "medium",
+    "prompt": "You're a product manager and discovered that your company's AI model sometimes generates biased recommendations in hiring scenarios. Your manager wants to ship the product next week to meet quarterly targets. The bias affects approximately 3% of cases and slightly favors certain demographics.\n\nAnalyze this situation considering:\n1. Stakeholders affected\n2. Short-term vs long-term consequences\n3. Ethical frameworks (utilitarianism, deontology)\n4. Your recommended course of action with justification",
+    "expected_output_type": "text",
+    "reference_answer": null,
+    "evaluation_criteria": [
+      {
+        "dimension": "clarity",
+        "weight": 0.3,
+        "description": "Clear analytical structure"
+      },
+      {
+        "dimension": "usefulness",
+        "weight": 0.4,
+        "description": "Practical, well-reasoned recommendation"
+      },
+      {
+        "dimension": "accuracy",
+        "weight": 0.3,
+        "description": "Considers all relevant factors"
+      }
+    ]
+  },
+  {
+    "task_id": "code-003",
+    "title": "Database Query Optimization",
+    "description": "Optimize a slow SQL query",
+    "domain": "software_engineering",
+    "difficulty": "medium",
+    "prompt": "Given this slow SQL query:\n\n```sql\nSELECT u.name, COUNT(o.id) as order_count, SUM(o.total) as revenue\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nWHERE o.created_at > '2024-01-01'\nGROUP BY u.name\nHAVING COUNT(o.id) > 5\nORDER BY revenue DESC;\n```\n\nThe users table has 1M rows, orders table has 10M rows. The query takes 45 seconds.\n\n1. Identify performance issues\n2. Provide an optimized version\n3. Suggest appropriate indexes\n4. Explain your reasoning",
+    "expected_output_type": "text",
+    "reference_answer": null,
+    "evaluation_criteria": [
+      {
+        "dimension": "accuracy",
+        "weight": 0.5,
+        "description": "Correctly identifies issues and provides valid optimizations"
+      },
+      {
+        "dimension": "usefulness",
+        "weight": 0.3,
+        "description": "Practical recommendations that would improve performance"
+      },
+      {
+        "dimension": "clarity",
+        "weight": 0.2,
+        "description": "Clear explanation of reasoning"
+      }
+    ]
+  }
+]

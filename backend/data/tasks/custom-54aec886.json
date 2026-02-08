@@ -1,0 +1,29 @@
+{
+  "task_id": "custom-54aec886",
+  "title": "Product Launch Email",
+  "description": "Write a professional product launch email",
+  "domain": "writing",
+  "difficulty": "easy",
+  "prompt": "Write a professional email announcing the launch of a new AI-powered task management app called 'FlowMaster' to existing customers. The email should:\n1. Be engaging and concise (under 200 words)\n2. Highlight 3 key features: AI task prioritization, smart scheduling, team collaboration\n3. Include a clear call-to-action\n4. Maintain a friendly yet professional tone",
+  "expected_output_type": "text",
+  "reference_answer": null,
+  "evaluation_criteria": [
+    {
+      "dimension": "clarity",
+      "weight": 0.3,
+      "description": "Message is clear and well-structured"
+    },
+    {
+      "dimension": "usefulness",
+      "weight": 0.4,
+      "description": "Effectively communicates value and drives action"
+    },
+    {
+      "dimension": "accuracy",
+      "weight": 0.3,
+      "description": "Includes all required elements"
+    }
+  ],
+  "metadata": {},
+  "created_at": "2026-02-01 21:45:48.841967+00:00"
+}

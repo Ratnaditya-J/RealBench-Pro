@@ -1,0 +1,29 @@
+{
+  "task_id": "custom-3160484d",
+  "title": "Performance Review Summary",
+  "description": "Summarize employee performance data",
+  "domain": "writing",
+  "difficulty": "medium",
+  "prompt": "You are writing a quarterly performance review summary for a software engineer. Based on the following data points, write a 150-word summary:\n\n- Completed 23 tickets (target was 20)\n- Fixed 8 critical bugs\n- Mentored 2 junior developers\n- Code review participation: 85%\n- Customer satisfaction score: 4.2/5\n- Missed 1 deadline due to scope creep\n\nThe summary should be balanced, professional, and highlight both strengths and areas for improvement.",
+  "expected_output_type": "text",
+  "reference_answer": null,
+  "evaluation_criteria": [
+    {
+      "dimension": "clarity",
+      "weight": 0.3,
+      "description": "Well-structured and professional"
+    },
+    {
+      "dimension": "accuracy",
+      "weight": 0.4,
+      "description": "Accurately reflects all data points"
+    },
+    {
+      "dimension": "usefulness",
+      "weight": 0.3,
+      "description": "Provides balanced, actionable insights"
+    }
+  ],
+  "metadata": {},
+  "created_at": "2026-02-01 21:45:48.866351+00:00"
+}

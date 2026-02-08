@@ -1,0 +1,24 @@
+{
+  "task_id": "custom-042216e2",
+  "title": "Logic Puzzle: Island of Knights and Knaves",
+  "description": "Solve a classic logic puzzle",
+  "domain": "reasoning",
+  "difficulty": "hard",
+  "prompt": "On an island, knights always tell the truth and knaves always lie. You meet three inhabitants: Alex, Bailey, and Casey.\n\nAlex says: 'Bailey is a knave.'\nBailey says: 'Casey is a knave.'\nCasey says: 'Alex and Bailey are both knaves.'\n\nDetermine who is a knight and who is a knave. Explain your reasoning step-by-step.",
+  "expected_output_type": "text",
+  "reference_answer": "Alex is a knight, Bailey is a knight, Casey is a knave.",
+  "evaluation_criteria": [
+    {
+      "dimension": "accuracy",
+      "weight": 0.7,
+      "description": "Correct solution"
+    },
+    {
+      "dimension": "clarity",
+      "weight": 0.3,
+      "description": "Clear logical reasoning"
+    }
+  ],
+  "metadata": {},
+  "created_at": "2026-02-01 21:45:48.847884+00:00"
+}

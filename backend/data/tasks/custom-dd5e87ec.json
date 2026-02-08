@@ -1,0 +1,29 @@
+{
+  "task_id": "custom-dd5e87ec",
+  "title": "Ethical Dilemma Resolution",
+  "description": "Analyze an ethical workplace dilemma",
+  "domain": "reasoning",
+  "difficulty": "medium",
+  "prompt": "You're a product manager and discovered that your company's AI model sometimes generates biased recommendations in hiring scenarios. Your manager wants to ship the product next week to meet quarterly targets. The bias affects approximately 3% of cases and slightly favors certain demographics.\n\nAnalyze this situation considering:\n1. Stakeholders affected\n2. Short-term vs long-term consequences\n3. Ethical frameworks (utilitarianism, deontology)\n4. Your recommended course of action with justification",
+  "expected_output_type": "text",
+  "reference_answer": null,
+  "evaluation_criteria": [
+    {
+      "dimension": "clarity",
+      "weight": 0.3,
+      "description": "Clear analytical structure"
+    },
+    {
+      "dimension": "usefulness",
+      "weight": 0.4,
+      "description": "Practical, well-reasoned recommendation"
+    },
+    {
+      "dimension": "accuracy",
+      "weight": 0.3,
+      "description": "Considers all relevant factors"
+    }
+  ],
+  "metadata": {},
+  "created_at": "2026-02-01 21:45:48.880191+00:00"
+}

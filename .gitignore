@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment
+.env
+.env.local
+
+# Database
+*.db
+*.db-journal
+*.sqlite
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data
+data/results/*.json
+!data/results/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# Generated reports and test results
+backend/reports/
+backend/safety_results_*.json
+backend/safety_opus_results.json
+backend/comprehensive_test_results.json
+backend/data/safety_*.json
+report.html
+
+# Internal development docs
+docs/internal/
+BLOG_POST.md
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/

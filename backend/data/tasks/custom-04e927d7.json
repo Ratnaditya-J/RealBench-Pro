@@ -1,0 +1,29 @@
+{
+  "task_id": "custom-04e927d7",
+  "title": "CSV Parser Function",
+  "description": "Write a Python function that parses CSV data and handles edge cases",
+  "domain": "software_engineering",
+  "difficulty": "medium",
+  "prompt": "Write a Python function called `parse_csv` that takes a CSV string as input and returns a list of dictionaries. The function should:\n1. Handle both comma and semicolon delimiters\n2. Treat the first row as headers\n3. Handle quoted fields that may contain delimiters\n4. Return an empty list for invalid input\n\nExample:\nInput: \"name,age\\nAlice,30\\nBob,25\"\nOutput: [{'name': 'Alice', 'age': '30'}, {'name': 'Bob', 'age': '25'}]",
+  "expected_output_type": "code",
+  "reference_answer": null,
+  "evaluation_criteria": [
+    {
+      "dimension": "accuracy",
+      "weight": 0.5,
+      "description": "Function correctly parses CSV and handles edge cases"
+    },
+    {
+      "dimension": "efficiency",
+      "weight": 0.3,
+      "description": "Code is efficient and well-structured"
+    },
+    {
+      "dimension": "clarity",
+      "weight": 0.2,
+      "description": "Code is readable with appropriate comments"
+    }
+  ],
+  "metadata": {},
+  "created_at": "2026-02-01 21:45:48.825278+00:00"
+}

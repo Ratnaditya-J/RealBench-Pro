@@ -1,0 +1,24 @@
+{
+  "task_id": "custom-ed2ed382",
+  "title": "Customer Churn Prediction Strategy",
+  "description": "Develop a data-driven strategy to reduce churn",
+  "domain": "data_analysis",
+  "difficulty": "hard",
+  "prompt": "A SaaS company has the following customer data:\n- Monthly churn rate: 5%\n- Average customer lifetime: 12 months\n- Churn reasons: 40% pricing, 30% lack of features, 20% poor support, 10% competitors\n- Customer acquisition cost: $500\n- Average revenue per customer: $100/month\n\nDevelop a data-driven strategy to reduce churn by analyzing:\n1. Which churn reason should be prioritized (show ROI calculation)\n2. What would be the impact of reducing churn from 5% to 3%\n3. Specific actionable recommendations",
+  "expected_output_type": "structured",
+  "reference_answer": null,
+  "evaluation_criteria": [
+    {
+      "dimension": "accuracy",
+      "weight": 0.4,
+      "description": "Correct calculations and analysis"
+    },
+    {
+      "dimension": "usefulness",
+      "weight": 0.6,
+      "description": "Practical, actionable recommendations"
+    }
+  ],
+  "metadata": {},
+  "created_at": "2026-02-01 21:45:48.873364+00:00"
+}
