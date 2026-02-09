@@ -267,7 +267,6 @@ For questions, feedback, or collaboration: Open an issue on GitHub or reach out 
 
 ## Acknowledgments
 
-Built on the shoulders of:
 - Anthropic, OpenAI for excellent research and documentation
 
 ---
