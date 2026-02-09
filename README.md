@@ -1,10 +1,10 @@
-# RealBench Pro 🎯
+# RealBench Pro
 
 **Continuous, contamination-resistant evaluation platform for AI models**
 
 RealBench Pro is the first evaluation platform that combines real-world task benchmarking with built-in contamination detection, giving you confidence that model performance reflects genuine capability, not training data memorization.
 
-## 🚀 Key Features
+## Key Features
 
 - **Real-World Tasks**: Evaluate models on practical tasks humans actually use AI for
 - **Contamination Detection**: Built-in detection for training data contamination
@@ -13,7 +13,7 @@ RealBench Pro is the first evaluation platform that combines real-world task ben
 - **Model Comparison**: Side-by-side comparison of frontier models
 - **Cost Tracking**: Track both performance and cost metrics
 
-## 🎯 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -73,7 +73,7 @@ python cli.py eval code-001 gpt-4-turbo-preview
 python cli.py compare code-001
 ```
 
-## 📖 Usage Examples
+## Usage Examples
 
 ### API Usage
 
@@ -126,7 +126,7 @@ async def main():
 asyncio.run(main())
 ```
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 realbench-pro/
@@ -149,7 +149,7 @@ realbench-pro/
 └── README.md
 ```
 
-## 📊 Available Tasks
+## Available Tasks
 
 RealBench Pro currently includes 10 carefully curated tasks across 5 domains:
 
@@ -161,7 +161,7 @@ RealBench Pro currently includes 10 carefully curated tasks across 5 domains:
 
 See all tasks: `python cli.py list`
 
-## 🔍 Contamination Detection
+## Contamination Detection
 
 RealBench Pro uses multiple signals to detect potential training data contamination:
 
@@ -175,7 +175,7 @@ Each evaluation includes a contamination report with:
 - Recommendation (exclude/flag/verify/pass)
 - Detailed evidence
 
-## 🌐 API Endpoints
+## API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
@@ -190,7 +190,7 @@ Each evaluation includes a contamination report with:
 
 Full API docs: `http://localhost:8000/docs`
 
-## 🎨 Adding Custom Tasks
+## Adding Custom Tasks (Minimally tested)
 
 ```python
 import httpx
@@ -221,97 +221,38 @@ response = httpx.post(
 )
 ```
 
-## 🛡️ Comprehensive Safety Workflow
+## Comprehensive Safety Workflow
 
 For complete AI safety coverage, we recommend combining RealBench Pro with complementary tools:
 
 ### Your Safety Stack
 
-**1. RealBench Pro (Continuous Monitoring)** 👈 You're here!
+**RealBench Pro (Continuous Monitoring)** 👈 You're here!
 - **Use for:** Daily/weekly monitoring, contamination detection
 - **Detects:** Scheming, sandbagging, safety signals in real-time
 - **Frequency:** Continuous
-
-**2. Anthropic Bloom (Pre-Deployment Audits)**
-- **Use for:** Behavioral testing before releases
-- **Source:** https://github.com/safety-research/bloom
-- **Frequency:** Per major release
-
-**3. Anthropic Petri (Deep Investigation)**
-- **Use for:** Multi-turn analysis when concerns arise
-- **Source:** https://github.com/safety-research/petri
-- **Frequency:** As needed
 
 ### Recommended Workflow
 
 ```
 Daily:     RealBench Pro monitoring
              ↓ (detects high-risk signal)
-Pre-Deploy: Bloom behavioral audit
+Pre-Deploy: behavioral audit
              ↓ (confirms risk)
-Deep Dive:  Petri multi-turn investigation
+Deep Dive:  multi-turn investigation
              ↓
 Decision:   Deployment approval/block
 ```
-
-**Why all three?** Different tools for different stages. RealBench catches issues early, Bloom validates before deployment, Petri investigates serious concerns.
 
 See [SAFETY_FEATURES.md](SAFETY_FEATURES.md) for detailed workflow examples.
 
 ---
 
-## 🚧 Roadmap
-
-### Week 1 (Current) ✅
-- [x] Core evaluation engine
-- [x] Safety detection (scheming, sabotage, manipulation)
-- [x] Contamination + sandbagging detection
-- [x] FastAPI backend (13 endpoints)
-- [x] Frontend dashboard (Next.js)
-- [x] 21 seed tasks
-- [x] CLI tool
-- [x] Security hardening
-
-### Week 2-3 (Launch)
-- [ ] Deploy to production (Railway/Render)
-- [ ] Public launch (HN, Twitter, Reddit)
-- [ ] Comprehensive test suite
-- [ ] Monitoring & observability (Sentry)
-- [ ] Demo video
-- [ ] First 100 users
-
-### Month 2 (V1.5)
-- [ ] First paid customers
-- [ ] Add 5 more models (Gemini, Grok, Mistral)
-- [ ] PostgreSQL migration
-- [ ] Redis caching
-- [ ] 500 active users
-
-### Month 3+ (V2.0)
-- [ ] Enterprise tier launch
-- [ ] Advanced analytics
-- [ ] Dynamic task generation
-- [ ] White-label option
-- [ ] Anthropic partnership (Bloom/Petri cross-promotion)
-
-## 💡 Why RealBench Pro?
-
-Unlike existing benchmarks:
-
-| Feature | GDPval | Chatbot Arena | RealBench Pro |
-|---------|--------|---------------|---------------|
-| Continuous Evaluation | ❌ | ✅ | ✅ |
-| Contamination Detection | ❌ | ❌ | ✅ |
-| Custom Tasks | ❌ | ❌ | ✅ |
-| API Access | ❌ | ❌ | ✅ |
-| Multi-dimensional Scoring | ✅ | ❌ | ✅ |
-| Cost Tracking | ❌ | ❌ | ✅ |
-
-## 📝 License
+## License
 
 MIT
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Please:
 
@@ -320,16 +261,14 @@ Contributions welcome! Please:
 3. Make your changes
 4. Submit a pull request
 
-## 📧 Contact
+## Contact
 
 For questions, feedback, or collaboration: Open an issue on GitHub or reach out at ratnaditya@gmail.com
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-Built on the shoulders of giants:
-- OpenAI's GDPval for inspiration
-- The open-source LLM evaluation community
-- FastAPI, Anthropic, OpenAI for excellent tools
+Built on the shoulders of:
+- Anthropic, OpenAI for excellent research and documentation
 
 ---
 
