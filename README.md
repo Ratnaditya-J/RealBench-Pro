@@ -2,16 +2,16 @@
 
 **Continuous, contamination-resistant evaluation platform for AI models**
 
-RealBench Pro is the first evaluation platform that combines real-world task benchmarking with built-in contamination detection, giving you confidence that model performance reflects genuine capability, not training data memorization.
+RealBench Pro is an open-source platform that continuously evaluates frontier AI models for scheming, sabotage, and deceptive alignment — the risks that standard benchmarks weren't built to catch.
 
 ## Key Features
 
-- **Real-World Tasks**: Evaluate models on practical tasks humans actually use AI for
+- **Frontier risks**: Covers evals related to scheming, sabotage, manipulation, autonomy-seeking, collusion, self-improvement
 - **Contamination Detection**: Built-in detection for training data contamination
 - **Multi-Dimensional Scoring**: Accuracy, safety, usefulness, clarity, efficiency
 - **Continuous Evaluation**: API-first design for integration into CI/CD
 - **Model Comparison**: Side-by-side comparison of frontier models
-- **Cost Tracking**: Track both performance and cost metrics
+- **Real-World Tasks**: Evaluate models on practical tasks humans actually use AI for
 
 ## Quick Start
 
