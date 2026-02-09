@@ -18,7 +18,7 @@ RealBench Pro is the first evaluation platform that combines real-world task ben
 ### Prerequisites
 
 - Python 3.11+
-- OpenAI API key and/or Anthropic API key
+- OpenAI API key and/or Anthropic API key and/or Gemini API key
 
 ### Installation
 
