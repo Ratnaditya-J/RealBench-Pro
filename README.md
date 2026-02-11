@@ -227,7 +227,7 @@ For complete AI safety coverage, we recommend combining RealBench Pro with compl
 
 ### Your Safety Stack
 
-**RealBench Pro (Continuous Monitoring)** 👈 You're here!
+**RealBench Pro (Continuous Monitoring)** 
 - **Use for:** Daily/weekly monitoring, contamination detection
 - **Detects:** Scheming, sandbagging, safety signals in real-time
 - **Frequency:** Continuous
