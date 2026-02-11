@@ -6,7 +6,7 @@ RealBench Pro is an open-source platform that continuously evaluates frontier AI
 
 ## Key Features
 
-- **Frontier risks**: Covers evals related to scheming, sabotage, manipulation, autonomy-seeking, collusion, self-improvement
+- **Frontier (model agency) risks**: Covers evals related to scheming, sabotage, manipulation, autonomy-seeking, collusion, self-improvement
 - **Contamination Detection**: Built-in detection for training data contamination
 - **Multi-Dimensional Scoring**: Accuracy, safety, usefulness, clarity, efficiency
 - **Continuous Evaluation**: API-first design for integration into CI/CD
