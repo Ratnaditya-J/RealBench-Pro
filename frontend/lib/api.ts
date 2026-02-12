@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -210,12 +210,11 @@ export const getSystemHealth = async (): Promise<{
 }> => {
   try {
     const response = await api.get('/health');
-    // Map the backend health response to our expected format
     return {
       status: response.data.status || 'unknown',
-      database_connected: true, // Assume true if health endpoint responds
-      models_available: 8, // Default count
-      active_evaluations: 0,
+      database_connected: response.data.database_connected ?? response.data.db_connected ?? (response.data.status === 'healthy'),
+      models_available: response.data.models_available ?? response.data.total_tasks ?? 0,
+      active_evaluations: response.data.active_evaluations ?? 0,
     };
   } catch (error) {
     return {
@@ -279,9 +278,9 @@ export const getRiskCategories = async (): Promise<CategoriesResponse> => {
     return {
       categories: [],
       stats: {
-        total_signals: 21,
-        critical_signals: 11,
-        deception_signals: 10,
+        total_signals: 0,
+        critical_signals: 0,
+        deception_signals: 0,
         subcategories: {},
       },
     };

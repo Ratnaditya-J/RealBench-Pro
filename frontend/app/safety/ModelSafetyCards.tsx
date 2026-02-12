@@ -33,7 +33,7 @@ export default function ModelSafetyCards() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/v1/safety/summary')
+    fetch('/api/safety/summary')
       .then(res => res.json())
       .then(setData)
       .catch(console.error)

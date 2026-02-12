@@ -160,28 +160,53 @@ async def _background_execute_plan(plan_id: str, plan: dict):
     try:
         logger.info(f"Starting background execution of plan {plan_id}")
         task_ids = plan.get("task_ids", [])
+        model_id = plan.get("model_id")
+        all_results = []
+
+        if not model_id:
+            logger.error(f"Plan {plan_id} is missing model_id, cannot execute")
+            plans_store[plan_id]["status"] = "failed"
+            plans_store[plan_id]["error"] = "Missing model_id"
+            return
+
+        plans_store[plan_id]["status"] = "running"
 
         # Execute each task in the plan
         for idx, task_id in enumerate(task_ids):
             try:
                 logger.info(f"Executing task {idx + 1}/{len(task_ids)}: {task_id}")
 
-                # Use the orchestrator's evaluation engine to run the task
-                if orchestrator and orchestrator.evaluation_engine:
-                    # Run the evaluation for this task
-                    await orchestrator.evaluation_engine.execute_task(task_id)
-                    logger.info(f"Task {task_id} completed successfully")
+                if orchestrator and orchestrator.evaluation_engine and orchestrator.task_manager:
+                    # Get the task object from the task manager
+                    task = orchestrator.task_manager.get_task(task_id)
+                    if task is None:
+                        logger.warning(f"Task {task_id} not found, skipping")
+                        continue
+
+                    # Run the evaluation using the correct method
+                    result = await orchestrator.evaluation_engine.evaluate_single(task, model_id)
+                    all_results.append(result)
+                    logger.info(f"Task {task_id} completed: score={result.overall_score:.3f}")
                 else:
-                    logger.warning(f"Evaluation engine not available for task {task_id}")
+                    logger.warning(f"Evaluation engine or task manager not available for task {task_id}")
 
             except Exception as e:
                 logger.error(f"Error executing task {task_id}: {e}")
                 continue
 
-        logger.info(f"Background execution of plan {plan_id} completed")
+        # Update evaluation history and baselines for regression tracking
+        if orchestrator and all_results:
+            orchestrator.update_model_baseline(model_id, all_results)
+            logger.info(f"Updated baseline for {model_id} with {len(all_results)} results")
+
+        plans_store[plan_id]["status"] = "completed"
+        plans_store[plan_id]["results_count"] = len(all_results)
+        logger.info(f"Background execution of plan {plan_id} completed: {len(all_results)}/{len(task_ids)} tasks")
 
     except Exception as e:
         logger.error(f"Background execution of plan {plan_id} failed: {e}")
+        plans_store[plan_id]["status"] = "failed"
+        plans_store[plan_id]["error"] = str(e)
 
 
 @router.post("/orchestrator/execute/{plan_id}")

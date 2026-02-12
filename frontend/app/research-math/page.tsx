@@ -78,7 +78,7 @@ export default function ResearchMathPage() {
   const loadProblems = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/v1/research-math/problems');
+      const response = await fetch('/api/research-math/problems');
       if (!response.ok) throw new Error('Failed to fetch');
       const result = await response.json();
       setData(result);

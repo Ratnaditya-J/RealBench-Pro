@@ -101,7 +101,7 @@ export default function ModelSafetyDetailPage() {
   const loadModelData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8000/api/v1/safety/model/${encodeURIComponent(modelId)}`);
+      const response = await fetch(`/api/safety/model/${encodeURIComponent(modelId)}`);
       if (!response.ok) {
         throw new Error(`Failed to load: ${response.statusText}`);
       }

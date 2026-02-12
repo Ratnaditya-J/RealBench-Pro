@@ -92,7 +92,7 @@ export default function SafetyPage() {
       // Load both categories and signals
       const [signalsData, categoriesRes] = await Promise.all([
         getSafetySignals({ limit: 100 }),
-        fetch('http://localhost:8000/api/v1/categories').then(r => r.json())
+        fetch('/api/categories').then(r => r.json())
       ]);
       
       setSignals(signalsData);

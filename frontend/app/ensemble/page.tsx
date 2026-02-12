@@ -123,7 +123,7 @@ export default function EnsemblePage() {
   const fetchReports = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/v1/ensemble/reports?limit=50');
+      const response = await fetch('/api/ensemble/reports?limit=50');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
