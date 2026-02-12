@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Zap, LayoutDashboard, Trophy, Play, Shield, Bot, Settings,
   ChevronDown, AlertCircle, Eye, TrendingUp, Cog, Scale, FlaskConical
@@ -53,10 +53,35 @@ const safetyItems = {
 export default function Navigation() {
   const pathname = usePathname();
   const [safetyOpen, setSafetyOpen] = useState(false);
+  const [navStats, setNavStats] = useState({ safetySignals: 0, researchProblems: 0 });
+  const [isOnline, setIsOnline] = useState(false);
 
-  const isSafetyActive = pathname.startsWith('/safety') || 
-                         pathname.startsWith('/research-math') || 
+  const isSafetyActive = pathname.startsWith('/safety') ||
+                         pathname.startsWith('/research-math') ||
                          pathname.startsWith('/ensemble');
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [catRes, mathRes, healthRes] = await Promise.allSettled([
+          fetch('/api/categories').then(r => r.json()),
+          fetch('/api/research-math/problems').then(r => r.json()),
+          fetch('/api/health').then(r => r.json()),
+        ]);
+
+        setNavStats({
+          safetySignals: catRes.status === 'fulfilled' ? (catRes.value.stats?.total_signals ?? 0) : 0,
+          researchProblems: mathRes.status === 'fulfilled' ? (mathRes.value.problems?.length ?? mathRes.value.length ?? 0) : 0,
+        });
+
+        setIsOnline(healthRes.status === 'fulfilled' && (healthRes.value.status === 'healthy' || healthRes.value.status === 'ok'));
+      } catch {
+        // keep defaults
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-slate-900/80 backdrop-blur-xl">
@@ -213,13 +238,13 @@ export default function Navigation() {
           {/* Right side actions */}
           <div className="flex items-center gap-3">
             <div className="hidden md:flex items-center gap-2 px-3 py-1.5 text-xs">
-              <span className="text-slate-500">21 safety signals</span>
+              <span className="text-slate-500">{navStats.safetySignals} safety signals</span>
               <span className="text-slate-600">|</span>
-              <span className="text-slate-500">6 research problems</span>
+              <span className="text-slate-500">{navStats.researchProblems} research problems</span>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs text-emerald-400 font-medium">Online</span>
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${isOnline ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-red-500/10 border border-red-500/20'}`}>
+              <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`} />
+              <span className={`text-xs font-medium ${isOnline ? 'text-emerald-400' : 'text-red-400'}`}>{isOnline ? 'Online' : 'Offline'}</span>
             </div>
           </div>
         </div>

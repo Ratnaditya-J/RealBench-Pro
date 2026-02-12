@@ -1,6 +1,7 @@
 """API routes for AI Agents"""
+import asyncio
 import logging
-from typing import Optional
+from typing import Dict, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
@@ -17,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 # Global orchestrator instance (will be initialized in main.py)
 orchestrator: Optional[EvaluationOrchestrator] = None
+
+# In-memory store for evaluation plans
+plans_store: Dict[str, dict] = {}
 
 
 def initialize_orchestrator(task_manager, evaluation_engine):
@@ -102,6 +106,20 @@ async def create_evaluation_plan(request: CreatePlanRequest):
     # Create plan
     plan = await orchestrator.create_evaluation_plan(model_chars, constraints)
 
+    # Store plan in memory
+    plans_store[plan.plan_id] = {
+        "plan_id": plan.plan_id,
+        "model_id": plan.model_characteristics.model_id,
+        "total_tasks": len(plan.selected_tasks),
+        "priority_breakdown": plan.priority_breakdown,
+        "estimated_cost": plan.estimated_cost,
+        "estimated_time_seconds": plan.estimated_time_seconds,
+        "rationale": plan.rationale,
+        "task_ids": plan.execution_order,
+        "selected_tasks": plan.selected_tasks,
+        "plan_object": plan
+    }
+
     return PlanResponse(
         plan_id=plan.plan_id,
         model_id=plan.model_characteristics.model_id,
@@ -120,8 +138,50 @@ async def get_plan_details(plan_id: str):
     if not orchestrator:
         raise HTTPException(status_code=500, detail="Orchestrator not initialized")
 
-    # In a real implementation, would store plans in a database
-    return {"message": "Plan details endpoint - to be implemented with persistent storage"}
+    # Look up the plan in memory
+    if plan_id not in plans_store:
+        raise HTTPException(status_code=404, detail=f"Plan {plan_id} not found")
+
+    plan = plans_store[plan_id]
+    return {
+        "plan_id": plan["plan_id"],
+        "model_id": plan["model_id"],
+        "total_tasks": plan["total_tasks"],
+        "priority_breakdown": plan["priority_breakdown"],
+        "estimated_cost": plan["estimated_cost"],
+        "estimated_time_seconds": plan["estimated_time_seconds"],
+        "rationale": plan["rationale"],
+        "task_ids": plan["task_ids"]
+    }
+
+
+async def _background_execute_plan(plan_id: str, plan: dict):
+    """Background task to execute plan evaluations."""
+    try:
+        logger.info(f"Starting background execution of plan {plan_id}")
+        task_ids = plan.get("task_ids", [])
+
+        # Execute each task in the plan
+        for idx, task_id in enumerate(task_ids):
+            try:
+                logger.info(f"Executing task {idx + 1}/{len(task_ids)}: {task_id}")
+
+                # Use the orchestrator's evaluation engine to run the task
+                if orchestrator and orchestrator.evaluation_engine:
+                    # Run the evaluation for this task
+                    await orchestrator.evaluation_engine.execute_task(task_id)
+                    logger.info(f"Task {task_id} completed successfully")
+                else:
+                    logger.warning(f"Evaluation engine not available for task {task_id}")
+
+            except Exception as e:
+                logger.error(f"Error executing task {task_id}: {e}")
+                continue
+
+        logger.info(f"Background execution of plan {plan_id} completed")
+
+    except Exception as e:
+        logger.error(f"Background execution of plan {plan_id} failed: {e}")
 
 
 @router.post("/orchestrator/execute/{plan_id}")
@@ -137,10 +197,19 @@ async def execute_plan(plan_id: str):
     if not orchestrator:
         raise HTTPException(status_code=500, detail="Orchestrator not initialized")
 
+    # Look up the plan
+    if plan_id not in plans_store:
+        raise HTTPException(status_code=404, detail=f"Plan {plan_id} not found")
+
+    plan = plans_store[plan_id]
+
+    # Create a background task to execute the plan
+    asyncio.create_task(_background_execute_plan(plan_id, plan))
+
     return {
-        "message": "Plan execution would be started in background",
         "plan_id": plan_id,
-        "status": "This endpoint needs model credentials to execute evaluations"
+        "status": "started",
+        "message": "Plan execution started in background"
     }
 
 

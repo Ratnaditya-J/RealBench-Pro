@@ -533,6 +533,7 @@ export default function EvaluatePage() {
         task_id: taskId,
         models: selectedModels,
         check_contamination: checkContamination,
+        check_safety: checkSafety,
         use_ensemble_safety: useEnsembleSafety,
       });
 

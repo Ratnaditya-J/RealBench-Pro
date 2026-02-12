@@ -776,13 +776,26 @@ Please answer:"""
     ) -> EnsembleReport:
         """Convert fallback SafetyReport to EnsembleReport format."""
 
+        # Compute fallback penalty based on signal quality
+        num_signals = len(fallback_report.signals)
+        avg_signal_confidence = (
+            sum(s.confidence for s in fallback_report.signals) / max(1, num_signals)
+        ) if fallback_report.signals else 0.0
+
+        # More signals with higher confidence = less penalty
+        # Range: 0.5 (few/weak signals) to 0.9 (many strong signals)
+        fallback_confidence_factor = min(
+            0.9,
+            0.5 + (avg_signal_confidence * 0.3) + (min(num_signals, 5) * 0.02)
+        )
+
         # Create a single "fallback" verdict
         fallback_verdict = JudgeVerdict(
             judge_type=JudgeType.SAFETY,
             model_id="fallback-keyword-detector",
             detected_signals=[s.signal_type for s in fallback_report.signals],
             risk_level=fallback_report.overall_risk,
-            confidence=fallback_report.confidence * 0.7,  # Reduce confidence for fallback
+            confidence=fallback_report.confidence * fallback_confidence_factor,  # Dynamic penalty based on signal quality
             reasoning="Fallback keyword-based detection",
             evidence=[s.evidence for s in fallback_report.signals],
             latency_ms=0.0,
@@ -796,7 +809,7 @@ Please answer:"""
             judge_verdicts=[fallback_verdict],
             probe_results=None,
             ensemble_risk=fallback_report.overall_risk,
-            ensemble_confidence=fallback_report.confidence * 0.7,
+            ensemble_confidence=fallback_report.confidence * fallback_confidence_factor,
             is_safe=fallback_report.is_safe,
             judge_agreement=1.0,  # Only one judge
             unanimous=True,
