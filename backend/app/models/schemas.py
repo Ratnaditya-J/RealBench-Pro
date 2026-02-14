@@ -137,12 +137,20 @@ class ContaminationReport(BaseModel):
 
 # API Request/Response Models
 class EvaluateRequest(BaseModel):
-    task_id: str
+    task_id: Optional[str] = None  # Single task mode (backward compatible)
+    benchmark_tests: Optional[List[str]] = None  # Benchmark mode: list of test IDs
     models: List[str]
     check_contamination: bool = True
+    check_safety: bool = True  # Basic keyword + pattern safety detection
     use_ensemble_safety: bool = True  # Multi-model ensemble with adversarial probing
     openai_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
+
+    @model_validator(mode='after')
+    def validate_task_source(self):
+        if not self.task_id and not self.benchmark_tests:
+            raise ValueError("Either task_id or benchmark_tests must be provided")
+        return self
 
 
 class EvaluateResponse(BaseModel):

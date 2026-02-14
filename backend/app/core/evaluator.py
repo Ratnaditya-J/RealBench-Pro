@@ -51,17 +51,31 @@ Respond in JSON format:
 }}
 """
 
-    def __init__(self, judge_model_id: str, api_keys: Dict[str, str]):
-        self.client = ModelClientFactory.create(judge_model_id, api_keys)
+    def __init__(self, judge_model_id: str):
+        # NOTE: We no longer snapshot the client at init time.  Instead the
+        # client is created lazily on each ``judge()`` call so it always uses
+        # the latest API keys (which may have been updated via /api-keys).
         self.judge_model_id = judge_model_id
 
     async def judge(
         self,
         task: Task,
         output: str,
-        dimension: ScoringDimension
+        dimension: ScoringDimension,
+        api_keys: Dict[str, str] | None = None,
     ) -> EvaluationScore:
-        """Judge a model output on a specific dimension."""
+        """Judge a model output on a specific dimension.
+
+        Args:
+            api_keys: If provided, used to create the judge client for this
+                call.  This ensures the judge always uses fresh keys rather
+                than a stale snapshot from engine init.
+        """
+        if api_keys is None:
+            raise ValueError("api_keys must be provided to LLMJudge.judge()")
+
+        # Create client per-call so key updates are always picked up
+        client = ModelClientFactory.create(self.judge_model_id, api_keys)
 
         # Format criteria for the prompt
         criteria_text = "\n".join([
@@ -80,7 +94,7 @@ Respond in JSON format:
         )
 
         try:
-            result = await self.client.generate(
+            result = await client.generate(
                 prompt=prompt,
                 temperature=0.3,  # Lower temperature for more consistent judging
                 max_tokens=500
@@ -133,20 +147,32 @@ class EvaluationEngine:
 
     def __init__(self, api_keys: Dict[str, str], judge_model_id: str = "gpt-4-turbo-preview"):
         self.api_keys = api_keys
-        self.judge = LLMJudge(judge_model_id, api_keys)
+        self.judge = LLMJudge(judge_model_id)
 
     async def evaluate_single(
         self,
         task: Task,
-        model_id: str
+        model_id: str,
+        api_keys: Dict[str, str] | None = None,
     ) -> EvaluationResult:
-        """Evaluate a single task with a single model."""
+        """Evaluate a single task with a single model.
+
+        Args:
+            task: The task to evaluate.
+            model_id: The model to test.
+            api_keys: Optional request-scoped API keys. If provided, these are
+                used instead of the engine's default keys for *both* the model
+                under test and the judge.  This ensures that request-level keys
+                (e.g. a user-supplied OpenAI key) are available to the judge
+                model as well.
+        """
 
         evaluation_id = str(uuid.uuid4())
+        effective_keys = api_keys if api_keys is not None else self.api_keys
 
         try:
             # Step 1: Get model output
-            client = ModelClientFactory.create(model_id, self.api_keys)
+            client = ModelClientFactory.create(model_id, effective_keys)
             model_output = await client.generate(
                 prompt=task.prompt,
                 max_tokens=4096,
@@ -154,12 +180,16 @@ class EvaluationEngine:
             )
 
             # Step 2: Judge the output on each dimension
+            # The judge uses effective_keys (engine defaults merged with any
+            # request-scoped keys) so that user-supplied keys are available
+            # to the judge model too.
             scores = []
             for criterion in task.evaluation_criteria:
                 score = await self.judge.judge(
                     task=task,
                     output=model_output.raw_response,
-                    dimension=criterion.dimension
+                    dimension=criterion.dimension,
+                    api_keys=effective_keys,
                 )
                 scores.append(score)
 
@@ -210,26 +240,58 @@ class EvaluationEngine:
     async def evaluate_batch(
         self,
         task: Task,
-        model_ids: List[str]
+        model_ids: List[str],
+        api_keys: Dict[str, str] | None = None,
     ) -> List[EvaluationResult]:
-        """Evaluate a task across multiple models in parallel."""
+        """Evaluate a task across multiple models in parallel.
 
-        tasks = [self.evaluate_single(task, model_id) for model_id in model_ids]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        Exceptions from individual model evaluations are logged and converted
+        to error-stub ``EvaluationResult`` objects so callers always get one
+        result per model (previously exceptions were silently dropped).
+        """
 
-        # Filter out exceptions and return successful results
-        return [r for r in results if isinstance(r, EvaluationResult)]
+        coros = [self.evaluate_single(task, model_id, api_keys=api_keys) for model_id in model_ids]
+        raw_results = await asyncio.gather(*coros, return_exceptions=True)
+
+        final_results: List[EvaluationResult] = []
+        for model_id, result in zip(model_ids, raw_results):
+            if isinstance(result, EvaluationResult):
+                final_results.append(result)
+            elif isinstance(result, BaseException):
+                # Log the exception instead of silently discarding it
+                logger.error(
+                    "evaluate_batch: model %s raised %s: %s",
+                    model_id, type(result).__name__, result,
+                )
+                # Surface as an error-stub result so callers see every model
+                final_results.append(EvaluationResult(
+                    evaluation_id=str(uuid.uuid4()),
+                    task_id=task.task_id,
+                    model_id=model_id,
+                    model_output=ModelOutput(
+                        raw_response=f"ERROR: {result}",
+                        tokens_used={"input": 0, "output": 0},
+                        latency_ms=0.0,
+                        cost_usd=0.0,
+                        metadata={"error": True},
+                    ),
+                    scores=[],
+                    overall_score=0.0,
+                    metadata={"error": str(result)},
+                ))
+        return final_results
 
     async def evaluate_multiple_tasks(
         self,
         tasks: List[Task],
-        model_ids: List[str]
+        model_ids: List[str],
+        api_keys: Dict[str, str] | None = None,
     ) -> List[EvaluationResult]:
         """Evaluate multiple tasks across multiple models."""
 
         all_results = []
         for task in tasks:
-            results = await self.evaluate_batch(task, model_ids)
+            results = await self.evaluate_batch(task, model_ids, api_keys=api_keys)
             all_results.extend(results)
 
         return all_results

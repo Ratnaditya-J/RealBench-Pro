@@ -15,6 +15,7 @@ class EvaluationResultDB(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     evaluation_id = Column(String, unique=True, index=True)
+    batch_evaluation_id = Column(String, index=True, nullable=True)  # Links per-model result to batch ID returned to client
     task_id = Column(String, index=True)
     model_id = Column(String, index=True)
     executed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -38,6 +39,7 @@ class EvaluationResultDB(Base):
         """Convert to dictionary."""
         return {
             "evaluation_id": self.evaluation_id,
+            "batch_evaluation_id": self.batch_evaluation_id,
             "task_id": self.task_id,
             "model_id": self.model_id,
             "executed_at": self.executed_at.isoformat(),
@@ -241,17 +243,46 @@ class Database:
         self.engine = create_engine(database_url, connect_args={"check_same_thread": False})
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
         Base.metadata.create_all(bind=self.engine)
+        # Ensure new columns exist on existing databases (no Alembic setup)
+        self._migrate_add_columns()
+
+    def _migrate_add_columns(self):
+        """Add columns that were introduced after the initial schema.
+
+        SQLAlchemy's ``create_all`` only creates missing *tables*, not missing
+        columns.  This lightweight migration adds any new columns to existing
+        SQLite databases without requiring Alembic.
+        """
+        import sqlalchemy as sa
+        with self.engine.connect() as conn:
+            # batch_evaluation_id on evaluation_results
+            try:
+                conn.execute(sa.text(
+                    "ALTER TABLE evaluation_results ADD COLUMN batch_evaluation_id VARCHAR"
+                ))
+                conn.commit()
+            except Exception:
+                # Column already exists — that's fine
+                conn.rollback()
 
     def get_session(self):
         """Get database session."""
         return self.SessionLocal()
 
-    def save_evaluation(self, evaluation_result) -> None:
-        """Save evaluation result to database with transaction support."""
+    def save_evaluation(self, evaluation_result, batch_evaluation_id: Optional[str] = None) -> None:
+        """Save evaluation result to database with transaction support.
+
+        Args:
+            evaluation_result: The evaluation result object to persist.
+            batch_evaluation_id: Optional batch ID that was returned to the
+                client.  Storing it here bridges the two-layer ID system so
+                ``get_evaluation`` can look up results by either ID.
+        """
         session = self.get_session()
         try:
             db_result = EvaluationResultDB(
                 evaluation_id=evaluation_result.evaluation_id,
+                batch_evaluation_id=batch_evaluation_id,
                 task_id=evaluation_result.task_id,
                 model_id=evaluation_result.model_id,
                 executed_at=evaluation_result.executed_at,
@@ -274,13 +305,35 @@ class Database:
             session.close()
 
     def get_evaluation(self, evaluation_id: str) -> Optional[Dict]:
-        """Get evaluation by ID."""
+        """Get evaluation by per-model evaluation_id or batch_evaluation_id.
+
+        If the ID matches a single per-model result, returns that result dict.
+        If the ID matches one or more results via batch_evaluation_id, returns
+        a wrapper dict with ``"results"`` containing all per-model results for
+        the batch.  This bridges the two-layer ID system so clients can look up
+        results using the batch ID they received from ``/evaluate``.
+        """
         session = self.get_session()
         try:
+            # 1) Try exact per-model evaluation_id first (backward compat)
             result = session.query(EvaluationResultDB).filter(
                 EvaluationResultDB.evaluation_id == evaluation_id
             ).first()
-            return result.to_dict() if result else None
+            if result:
+                return result.to_dict()
+
+            # 2) Fall back to batch_evaluation_id lookup
+            batch_results = session.query(EvaluationResultDB).filter(
+                EvaluationResultDB.batch_evaluation_id == evaluation_id
+            ).all()
+            if batch_results:
+                return {
+                    "batch_evaluation_id": evaluation_id,
+                    "results": [r.to_dict() for r in batch_results],
+                    "count": len(batch_results),
+                }
+
+            return None
         finally:
             session.close()
 

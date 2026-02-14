@@ -17,9 +17,12 @@ export interface EvaluationCriterion {
 }
 
 export interface EvaluateRequest {
-  task_id: string;
+  task_id?: string;
+  benchmark_tests?: string[];
   models: string[];
   check_contamination?: boolean;
+  check_safety?: boolean;
+  use_ensemble_safety?: boolean;
   openai_api_key?: string;
   anthropic_api_key?: string;
 }

@@ -114,6 +114,7 @@ async def run_evaluation_background(
     task_id: str,
     model_ids: List[str],
     check_contamination: bool,
+    check_safety: bool = True,
     use_ensemble_safety: bool = True,
     api_keys: Optional[Dict] = None
 ):
@@ -146,20 +147,16 @@ async def run_evaluation_background(
         logger.error(f"Task {task_id} not found")
         return
 
-    # Create a copy of API keys for this request (avoid race conditions)
+    # Build request-scoped API keys (never mutate the shared engine)
     request_api_keys = evaluation_engine.api_keys.copy()
-    # Also include stored API keys
     request_api_keys.update(stored_api_keys)
     if api_keys:
         request_api_keys.update(api_keys)
         logger.info("Using provided API keys for evaluation")
 
-    # Update evaluation engine's keys for this run
-    evaluation_engine.api_keys = request_api_keys
-
     try:
-        # Run evaluations
-        results = await evaluation_engine.evaluate_batch(task, model_ids)
+        # Run evaluations — pass keys directly so concurrent requests are isolated
+        results = await evaluation_engine.evaluate_batch(task, model_ids, api_keys=request_api_keys)
 
         # Save results
         for i, result in enumerate(results):
@@ -175,8 +172,8 @@ async def run_evaluation_background(
                 result.contamination_score = contamination_report.confidence if contamination_report.is_contaminated else 0.0
                 database.save_contamination_report(contamination_report)
 
-            # Run basic keyword + pattern safety detection (always on)
-            if safety_detector:
+            # Run basic keyword + pattern safety detection (gated by check_safety)
+            if safety_detector and check_safety:
                 try:
                     safety_report = safety_detector.generate_comprehensive_report(
                         task_id=task.task_id,
@@ -222,7 +219,7 @@ async def run_evaluation_background(
                     logger.error(f"Ensemble safety detection failed: {e}")
                     # Don't fail the entire evaluation if ensemble fails
 
-            database.save_evaluation(result)
+            database.save_evaluation(result, batch_evaluation_id=evaluation_id)
 
             # Update progress in database
             progress = int(((i + 1) / len(model_ids)) * 100)
@@ -248,15 +245,13 @@ async def run_evaluation_background(
 async def evaluate_task(request: EvaluateRequest, background_tasks: BackgroundTasks):
     """
     Evaluate a task across multiple models.
+    Supports two modes:
+    - Single task: provide task_id
+    - Benchmark mode: provide benchmark_tests[] (list of test IDs)
     Runs in background and returns immediately.
     """
     if not task_manager:
         raise HTTPException(status_code=500, detail="Task manager not initialized")
-
-    # Validate task exists
-    task = task_manager.get_task(request.task_id)
-    if not task:
-        raise HTTPException(status_code=404, detail=f"Task {request.task_id} not found")
 
     # Validate models
     if not request.models:
@@ -269,24 +264,58 @@ async def evaluate_task(request: EvaluateRequest, background_tasks: BackgroundTa
     if request.anthropic_api_key:
         api_keys["anthropic"] = request.anthropic_api_key
 
-    # Generate a single evaluation ID for this batch
-    evaluation_id = str(uuid.uuid4())
+    # Resolve task IDs: either single task or benchmark tests
+    task_ids_to_evaluate: List[str] = []
 
-    # Schedule background task with the evaluation ID
-    background_tasks.add_task(
-        run_evaluation_background,
-        evaluation_id,
-        request.task_id,
-        request.models,
-        request.check_contamination,
-        request.use_ensemble_safety,
-        api_keys if api_keys else None
-    )
+    if request.benchmark_tests:
+        # Benchmark mode: create proper tasks from benchmark templates
+        from app.core.benchmark_tasks import get_benchmark_task, get_available_benchmark_ids
+
+        available_ids = get_available_benchmark_ids()
+        invalid_tests = [t for t in request.benchmark_tests if t not in available_ids]
+        if invalid_tests:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unknown benchmark tests: {invalid_tests}. Valid IDs: {available_ids}"
+            )
+
+        for test_id in request.benchmark_tests:
+            bench_task = get_benchmark_task(test_id)
+            if bench_task:
+                # Register the benchmark task in the task manager so evaluate can find it
+                task_manager.add_task(bench_task)
+                task_ids_to_evaluate.append(bench_task.task_id)
+                logger.info(f"Created benchmark task {bench_task.task_id} for test '{test_id}'")
+    elif request.task_id:
+        # Single task mode (backward compatible)
+        task = task_manager.get_task(request.task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail=f"Task {request.task_id} not found")
+        task_ids_to_evaluate.append(request.task_id)
+    else:
+        raise HTTPException(status_code=400, detail="Either task_id or benchmark_tests must be provided")
+
+    # Schedule evaluation for each task
+    evaluation_ids = []
+    for tid in task_ids_to_evaluate:
+        evaluation_id = str(uuid.uuid4())
+        evaluation_ids.append(evaluation_id)
+
+        background_tasks.add_task(
+            run_evaluation_background,
+            evaluation_id,
+            tid,
+            request.models,
+            request.check_contamination,
+            request.check_safety,
+            request.use_ensemble_safety,
+            api_keys if api_keys else None
+        )
 
     return EvaluateResponse(
-        evaluation_ids=[evaluation_id],
+        evaluation_ids=evaluation_ids,
         status="scheduled",
-        message=f"Evaluation scheduled for {len(request.models)} model(s). Track status at /api/v1/status/{evaluation_id}"
+        message=f"Evaluation scheduled: {len(task_ids_to_evaluate)} task(s) x {len(request.models)} model(s). Track via /api/v1/status/<id>"
     )
 
 
@@ -683,14 +712,47 @@ async def verify_research_math_solution(request: VerifySolutionRequest):
 
 @router.get("/health")
 async def health_check():
-    """Health check endpoint."""
+    """Health check endpoint with real metrics."""
     if not task_manager:
         raise HTTPException(status_code=500, detail="Task manager not initialized")
 
+    # Gather real metrics from the database
+    db_connected = False
+    active_evaluations = 0
+    models_evaluated = 0
+
+    if database:
+        session = None
+        try:
+            from sqlalchemy import func
+            from app.db.database import EvaluationStatusDB, EvaluationResultDB
+            session = database.get_session()
+
+            # Active (pending/running) evaluations
+            active_evaluations = session.query(EvaluationStatusDB).filter(
+                EvaluationStatusDB.status.in_(["pending", "running"])
+            ).count()
+
+            # Distinct models that have been evaluated
+            models_evaluated = session.query(
+                func.count(func.distinct(EvaluationResultDB.model_id))
+            ).scalar() or 0
+
+            db_connected = True
+        except Exception as e:
+            logger.warning(f"Health check DB query failed: {e}")
+            db_connected = False
+        finally:
+            if session:
+                session.close()
+
     return {
         "status": "healthy",
+        "database_connected": db_connected,
+        "models_available": models_evaluated,
+        "active_evaluations": active_evaluations,
         "total_tasks": task_manager.count_tasks(),
-        "version": "0.1.0"
+        "version": "0.1.0",
     }
 
 

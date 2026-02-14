@@ -291,6 +291,7 @@ export default function EvaluatePage() {
   const [useEnsembleSafety, setUseEnsembleSafety] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [evaluationId, setEvaluationId] = useState<string | null>(null);
+  const [evaluationIds, setEvaluationIds] = useState<string[]>([]);
   const [evaluationStatus, setEvaluationStatus] = useState<EvaluationStatus | null>(null);
   
   // API Key management
@@ -331,7 +332,9 @@ export default function EvaluatePage() {
         return;
       }
 
-      await axios.post(`${API_URL}/api-keys`, keysToUpdate);
+      await axios.post(`${API_URL}/api-keys`, keysToUpdate, {
+        headers: { 'X-API-Key': process.env.NEXT_PUBLIC_ADMIN_API_KEY || '' },
+      });
       
       // Reload status
       const response = await axios.get(`${API_URL}/api-keys`);
@@ -367,24 +370,58 @@ export default function EvaluatePage() {
     )
   })).filter(provider => provider.models.length > 0);
 
-  // Poll for status updates
-  const pollStatus = useCallback(async (evalId: string) => {
+  // Poll for status updates across ALL evaluation IDs (benchmark mode
+  // returns one ID per test; we aggregate progress across all of them).
+  const pollAllStatuses = useCallback(async (ids: string[]) => {
     try {
-      const response = await axios.get(`${API_URL}/status/${evalId}`);
-      setEvaluationStatus(response.data);
-      
-      if (response.data.status === 'completed') {
+      const responses = await Promise.all(
+        ids.map(id => axios.get(`${API_URL}/status/${id}`).catch(() => null))
+      );
+
+      let totalCompleted = 0;
+      let totalTotal = 0;
+      let anyRunning = false;
+      let anyFailed = false;
+      let firstError: string | undefined;
+
+      for (const resp of responses) {
+        if (!resp) continue;
+        const d = resp.data;
+        totalCompleted += d.completed ?? 0;
+        totalTotal += d.total ?? 0;
+        if (d.status === 'running' || d.status === 'pending') anyRunning = true;
+        if (d.status === 'failed') {
+          anyFailed = true;
+          if (!firstError) firstError = d.error;
+        }
+      }
+
+      const overallProgress = totalTotal > 0 ? Math.round((totalCompleted / totalTotal) * 100) : 0;
+      const overallStatus: EvaluationStatus['status'] =
+        anyRunning ? 'running' :
+        anyFailed ? 'failed' :
+        'completed';
+
+      setEvaluationStatus({
+        status: overallStatus,
+        progress: overallProgress,
+        completed: totalCompleted,
+        total: totalTotal,
+        error: firstError,
+      });
+
+      if (overallStatus === 'completed') {
         addToast({
           type: 'success',
           title: 'Evaluation Complete',
-          message: `Successfully evaluated ${response.data.completed} model(s)`,
+          message: `Successfully evaluated ${totalCompleted} model-task pair(s)`,
         });
         return true;
-      } else if (response.data.status === 'failed') {
+      } else if (overallStatus === 'failed' && !anyRunning) {
         addToast({
           type: 'error',
           title: 'Evaluation Failed',
-          message: response.data.error || 'An unexpected error occurred',
+          message: firstError || 'An unexpected error occurred',
         });
         return true;
       }
@@ -396,20 +433,20 @@ export default function EvaluatePage() {
   }, [addToast]);
 
   useEffect(() => {
-    if (!evaluationId) return;
-    
+    if (evaluationIds.length === 0) return;
+
     let cancelled = false;
     const poll = async () => {
       if (cancelled) return;
-      const done = await pollStatus(evaluationId);
+      const done = await pollAllStatuses(evaluationIds);
       if (!done && !cancelled) {
         setTimeout(poll, 2000);
       }
     };
-    
+
     poll();
     return () => { cancelled = true; };
-  }, [evaluationId, pollStatus]);
+  }, [evaluationIds, pollAllStatuses]);
 
   const toggleProvider = (providerName: string) => {
     setExpandedProviders(prev =>
@@ -510,35 +547,21 @@ export default function EvaluatePage() {
     setEvaluationStatus({ status: 'pending', progress: 0, completed: 0, total: selectedModels.length });
 
     try {
-      const testNames = selectedTests.map(id => {
-        for (const cat of BENCHMARK_CATEGORIES) {
-          const test = cat.tests.find(t => t.id === id);
-          if (test) return test.name;
-        }
-        return id;
-      });
-
-      const taskResponse = await axios.post(`${API_URL}/tasks`, {
-        title: `Benchmark: ${testNames.join(', ')}`,
-        description: `Automated benchmark evaluation for ${selectedModels.length} models`,
-        domain: 'general',
-        difficulty: 'medium',
-        prompt: `Evaluate the following capabilities: ${testNames.join(', ')}`,
-        expected_output_type: 'text',
-      });
-
-      const taskId = taskResponse.data.task_id;
-
+      // Send selected benchmark test IDs directly to the backend,
+      // which creates proper per-test tasks with meaningful prompts.
       const evalResponse = await axios.post(`${API_URL}/evaluate`, {
-        task_id: taskId,
+        benchmark_tests: selectedTests,
         models: selectedModels,
         check_contamination: checkContamination,
         check_safety: checkSafety,
         use_ensemble_safety: useEnsembleSafety,
       });
 
-      const evalId = evalResponse.data.evaluation_ids[0];
-      setEvaluationId(evalId);
+      // Track ALL evaluation IDs for status polling
+      // (benchmark mode returns one ID per test)
+      const allIds: string[] = evalResponse.data.evaluation_ids;
+      setEvaluationIds(allIds);
+      setEvaluationId(allIds[0]);  // keep for backward compat (results link)
       
       addToast({
         type: 'info',
@@ -561,6 +584,7 @@ export default function EvaluatePage() {
 
   const resetEvaluation = () => {
     setEvaluationId(null);
+    setEvaluationIds([]);
     setEvaluationStatus(null);
   };
 

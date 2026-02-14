@@ -80,8 +80,8 @@ async def lifespan(app: FastAPI):
         safety_detector
     )
 
-    # Initialize agent routes
-    agent_routes.initialize_orchestrator(task_manager, evaluation_engine)
+    # Initialize agent routes (with database for result persistence)
+    agent_routes.initialize_orchestrator(task_manager, evaluation_engine, database)
 
     logger.info(f"✅ Loaded {task_manager.count_tasks()} tasks")
     logger.info("✅ Services initialized")
@@ -102,13 +102,13 @@ app = FastAPI(
 )
 
 # CORS middleware - Specify exact origins for security
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
 )
 
 # Include routes

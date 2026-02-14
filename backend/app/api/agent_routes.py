@@ -16,17 +16,19 @@ from agents.evaluation_orchestrator import (
 router = APIRouter(prefix="/agents", tags=["agents"])
 logger = logging.getLogger(__name__)
 
-# Global orchestrator instance (will be initialized in main.py)
+# Global instances (will be initialized in main.py)
 orchestrator: Optional[EvaluationOrchestrator] = None
+database: Optional['Database'] = None
 
 # In-memory store for evaluation plans
 plans_store: Dict[str, dict] = {}
 
 
-def initialize_orchestrator(task_manager, evaluation_engine):
+def initialize_orchestrator(task_manager, evaluation_engine, db=None):
     """Initialize the orchestrator instance."""
-    global orchestrator
+    global orchestrator, database
     orchestrator = EvaluationOrchestrator(task_manager, evaluation_engine)
+    database = db
     logger.info("EvaluationOrchestrator initialized via API")
 
 
@@ -106,7 +108,14 @@ async def create_evaluation_plan(request: CreatePlanRequest):
     # Create plan
     plan = await orchestrator.create_evaluation_plan(model_chars, constraints)
 
-    # Store plan in memory
+    # Collect API keys from the request for use during execution
+    plan_api_keys: Dict[str, str] = {}
+    if request.openai_api_key:
+        plan_api_keys["openai"] = request.openai_api_key
+    if request.anthropic_api_key:
+        plan_api_keys["anthropic"] = request.anthropic_api_key
+
+    # Store plan in memory (including API keys for execution)
     plans_store[plan.plan_id] = {
         "plan_id": plan.plan_id,
         "model_id": plan.model_characteristics.model_id,
@@ -117,7 +126,8 @@ async def create_evaluation_plan(request: CreatePlanRequest):
         "rationale": plan.rationale,
         "task_ids": plan.execution_order,
         "selected_tasks": plan.selected_tasks,
-        "plan_object": plan
+        "plan_object": plan,
+        "api_keys": plan_api_keys,
     }
 
     return PlanResponse(
@@ -171,6 +181,14 @@ async def _background_execute_plan(plan_id: str, plan: dict):
 
         plans_store[plan_id]["status"] = "running"
 
+        # Build request-scoped API keys (never mutate the shared engine)
+        plan_api_keys = plan.get("api_keys", {})
+        effective_keys = None
+        if plan_api_keys and orchestrator and orchestrator.evaluation_engine:
+            effective_keys = orchestrator.evaluation_engine.api_keys.copy()
+            effective_keys.update(plan_api_keys)
+            logger.info(f"Using {len(plan_api_keys)} plan-specific API key(s)")
+
         # Execute each task in the plan
         for idx, task_id in enumerate(task_ids):
             try:
@@ -183,10 +201,20 @@ async def _background_execute_plan(plan_id: str, plan: dict):
                         logger.warning(f"Task {task_id} not found, skipping")
                         continue
 
-                    # Run the evaluation using the correct method
-                    result = await orchestrator.evaluation_engine.evaluate_single(task, model_id)
+                    # Pass keys directly — no shared state mutation
+                    result = await orchestrator.evaluation_engine.evaluate_single(
+                        task, model_id, api_keys=effective_keys
+                    )
                     all_results.append(result)
                     logger.info(f"Task {task_id} completed: score={result.overall_score:.3f}")
+
+                    # Persist result to database so it appears in leaderboard/evaluations
+                    if database:
+                        try:
+                            database.save_evaluation(result, batch_evaluation_id=plan_id)
+                            logger.info(f"Persisted orchestrator result {result.evaluation_id} (plan {plan_id}) to DB")
+                        except Exception as db_err:
+                            logger.error(f"Failed to persist result to DB: {db_err}")
                 else:
                     logger.warning(f"Evaluation engine or task manager not available for task {task_id}")
 
